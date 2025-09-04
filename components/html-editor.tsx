@@ -28,7 +28,6 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0)
   const [typedText, setTypedText] = useState("")
   const [cursorPosition, setCursorPosition] = useState(0)
-  const previewRef = useRef<HTMLIFrameElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { completeLesson, lessons } = useLessons()
   const router = useRouter()
@@ -41,13 +40,13 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
   }, [code])
 
   useEffect(() => {
-    if (previewRef.current) {
-      const iframe = previewRef.current
-      iframe.srcDoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
-    }
-
-    if (typeof window !== "undefined" && window.previewFrame) {
-      window.previewFrame.srcDoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
+    // Update preview frame if it exists in the parent component
+    if (typeof window !== "undefined" && (window as any).previewFrame) {
+      try {
+        ;(window as any).previewFrame.srcDoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
+      } catch (error) {
+        // Silently handle any preview update errors
+      }
     }
   }, [code])
 
@@ -59,7 +58,6 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
 
       const testCode = (htmlCode: string) => {
         try {
-          // Create a temporary div to parse HTML without iframe conflicts
           const tempDiv = document.createElement("div")
           tempDiv.innerHTML = htmlCode
 
@@ -470,8 +468,6 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
           )}
         </div>
       </div>
-
-      <iframe ref={previewRef} className="hidden" title="Hidden Preview" sandbox="allow-same-origin" />
     </div>
   )
 }
