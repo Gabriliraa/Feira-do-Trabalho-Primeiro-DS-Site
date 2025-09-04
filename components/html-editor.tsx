@@ -40,13 +40,8 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
   }, [code])
 
   useEffect(() => {
-    // Update preview frame if it exists in the parent component
-    if (typeof window !== "undefined" && (window as any).previewFrame) {
-      try {
-        ;(window as any).previewFrame.srcDoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
-      } catch (error) {
-        // Silently handle any preview update errors
-      }
+    if (typeof window !== "undefined" && (window as any).updatePreview) {
+      ;(window as any).updatePreview(code)
     }
   }, [code])
 
@@ -270,7 +265,7 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
     ]
 
     return allSuggestions.filter(
-      (s) => s.trigger.toLowerCase().startsWith(typed.toLowerCase()) && typed.toLowerCase() !== s.trigger.toLowerCase(),
+      (s) => s.trigger.toLowerCase().startsWith(typed.toLowerCase()) && typed.toLowerCase() !== "",
     )
   }
 
@@ -473,18 +468,23 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
 }
 
 export function HTMLPreview() {
+  const [previewContent, setPreviewContent] = useState("<html><body><p>Digite seu código HTML...</p></body></html>")
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      ;(window as any).updatePreview = (code: string) => {
+        setPreviewContent(code || "<html><body><p>Digite seu código HTML...</p></body></html>")
+      }
+    }
+  }, [])
+
   return (
     <div className="h-full bg-white">
       <iframe
-        ref={(ref) => {
-          if (ref && typeof window !== "undefined") {
-            ;(window as any).previewFrame = ref
-          }
-        }}
         className="w-full h-full border-0"
         title="HTML Preview"
         sandbox="allow-same-origin allow-scripts"
-        srcDoc="<html><body><p>Digite seu código HTML...</p></body></html>"
+        srcDoc={previewContent}
       />
     </div>
   )
