@@ -43,20 +43,22 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
   useEffect(() => {
     if (previewRef.current) {
       const iframe = previewRef.current
-      const doc = iframe.contentDocument || iframe.contentWindow?.document
-      if (doc) {
-        doc.open()
-        doc.write(code || "<html><body><p>Digite seu código HTML...</p></body></html>")
-        doc.close()
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document
+        if (doc) {
+          // Use srcdoc instead of document.write to avoid CSS processing issues
+          iframe.srcdoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
+        }
+      } catch (error) {
+        console.log("[v0] Preview update error:", error)
       }
     }
 
-    if (window.previewFrame) {
-      const doc = window.previewFrame.contentDocument || window.previewFrame.contentWindow?.document
-      if (doc) {
-        doc.open()
-        doc.write(code || "<html><body><p>Digite seu código HTML...</p></body></html>")
-        doc.close()
+    if (typeof window !== "undefined" && window.previewFrame) {
+      try {
+        window.previewFrame.srcdoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
+      } catch (error) {
+        console.log("[v0] External preview update error:", error)
       }
     }
   }, [code])
@@ -500,13 +502,14 @@ export function HTMLPreview() {
     <div className="h-full bg-white">
       <iframe
         ref={(ref) => {
-          if (ref) {
-            window.previewFrame = ref
+          if (ref && typeof window !== "undefined") {
+            ;(window as any).previewFrame = ref
           }
         }}
         className="w-full h-full border-0"
         title="HTML Preview"
-        sandbox="allow-same-origin"
+        sandbox="allow-same-origin allow-scripts"
+        srcdoc="<html><body><p>Digite seu código HTML...</p></body></html>"
       />
     </div>
   )
