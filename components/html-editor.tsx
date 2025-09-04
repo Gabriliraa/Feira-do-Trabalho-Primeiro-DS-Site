@@ -209,7 +209,7 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
 
         if (matchingSuggestions.length > 0) {
           setTypedText(currentWord)
-          setCurrentSuggestion(matchingSuggestions[0])
+          setCurrentSuggestion(matchingSuggestions[0].completion)
           setSuggestionIndex(0)
           setShowSuggestions(true)
         } else {
@@ -271,14 +271,13 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
     const wordStart = beforeCursor.search(/[a-zA-Z][a-zA-Z]*$/)
     const beforeWord = beforeCursor.substring(0, wordStart)
 
-    const suggestion = htmlSuggestions.find((s) => s.completion === currentSuggestion)
-    const newCode = beforeWord + suggestion.completion + afterCursor
+    const newCode = beforeWord + currentSuggestion + afterCursor
     setCode(newCode)
     setShowSuggestions(false)
 
     // Position cursor appropriately
     setTimeout(() => {
-      const cursorPos = beforeWord.length + suggestion.completion.indexOf("></") + 1
+      const cursorPos = beforeWord.length + currentSuggestion.indexOf("></") + 1
       textarea.setSelectionRange(cursorPos, cursorPos)
       textarea.focus()
     }, 0)
