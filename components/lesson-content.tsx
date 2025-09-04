@@ -41,17 +41,8 @@ const lessonData = {
       },
     ],
     exercise: {
-      instruction: `1. **Preparar o template:**
-   • Clique no botão "Template" para começar com a estrutura básica
-
-2. **Alterar o título da página:**
-   • Mude o conteúdo da tag <title> para "Meu Site ETEC"
-
-3. **Criar o título principal:**
-   • Mude o <h1> para "Meu Site ETEC"
-
-4. **Adicionar um parágrafo:**
-   • Adicione uma tag <p> com o texto "Olá mundo!" abaixo do h1`,
+      instruction:
+        "1) Clique no botão 'Template' para começar\n2) Mude o título da página para 'Meu Site ETEC'\n3) Mude o <h1> para 'Meu Site ETEC'\n4) Adicione um parágrafo <p> com o texto 'Olá mundo!' abaixo do h1",
       expectedOutput: `<!DOCTYPE html>
 <html>
 <head>
@@ -88,21 +79,8 @@ Dica: Use h1 só uma vez por página!`,
       },
     ],
     exercise: {
-      instruction: `1. **Preparar a estrutura:**
-   • Use o botão "Template" para começar
-
-2. **Configurar o título da página:**
-   • Mude a tag <title> para "Sobre Mim"
-
-3. **Criar o título principal:**
-   • Adicione um <h1> com o texto "Sobre Mim"
-
-4. **Adicionar subtítulo:**
-   • Crie um <h2> com "Estudante da ETEC"
-
-5. **Escrever apresentação:**
-   • Adicione um parágrafo falando seu nome e que está aprendendo HTML
-   • Use a tag <strong> para destacar a palavra "aprendendo"`,
+      instruction:
+        "1) Use o botão 'Template' para começar\n2) Mude o título da página para 'Sobre Mim'\n3) Faça um <h1>Sobre Mim</h1>\n4) Faça um <h2>Estudante da ETEC</h2>\n5) Adicione um parágrafo falando seu nome e que está aprendendo HTML (use <strong> na palavra 'aprendendo')",
       expectedOutput: `<!DOCTYPE html>
 <html>
 <head>
@@ -152,20 +130,8 @@ Dica: Use h1 só uma vez por página!`,
       },
     ],
     exercise: {
-      instruction: `1. **Preparar a base:**
-   • Use o botão "Template" para começar
-
-2. **Criar o cabeçalho:**
-   • Dentro do <body>, adicione uma tag <header>
-   • Dentro do header, coloque um <h1> com "Meu Site"
-
-3. **Adicionar conteúdo principal:**
-   • Crie uma tag <main> após o header
-   • Dentro do main, adicione um <p> com "Conteúdo principal aqui."
-
-4. **Finalizar com rodapé:**
-   • Adicione uma tag <footer> após o main
-   • Dentro do footer, coloque um <p> com "Rodapé da página"`,
+      instruction:
+        "1) Use o botão 'Template' para começar\n2) Dentro do <body>, faça um <header> com <h1>Meu Site</h1>\n3) Faça um <main> com <p>Conteúdo principal aqui.</p>\n4) Faça um <footer> com <p>Rodapé da página</p>",
       expectedOutput: `<!DOCTYPE html>
 <html>
 <head>
@@ -206,19 +172,8 @@ Sempre coloque uma descrição na imagem (alt)!`,
       },
     ],
     exercise: {
-      instruction: `1. **Preparar a estrutura:**
-   • Use o botão "Template" para começar
-
-2. **Criar título da página:**
-   • Adicione um <h1> com "Minha Página"
-
-3. **Adicionar link para o Google:**
-   • Crie um parágrafo com o texto "Visite o "
-   • Dentro do parágrafo, adicione um link: <a href="https://google.com">Google</a>
-
-4. **Inserir uma imagem:**
-   • Digite 'img' e use o autocomplete para criar uma tag de imagem
-   • Use qualquer nome de arquivo (ex: "imagem.jpg") e uma descrição`,
+      instruction:
+        "1) Use o botão 'Template' para começar\n2) Faça um <h1>Minha Página</h1>\n3) Faça um parágrafo com 'Visite o' + link para Google (use <a href='https://google.com'>Google</a>)\n4) Adicione uma imagem (digite 'img' e use o autocomplete)",
       expectedOutput: `<!DOCTYPE html>
 <html>
 <head>
@@ -240,19 +195,8 @@ Sempre coloque uma descrição na imagem (alt)!`,
       "Este quiz testa tudo que você aprendeu nas 4 lições. Precisa acertar pelo menos 6 de 10 perguntas para passar e ganhar o certificado. Não se preocupe, as perguntas são sobre tags, estrutura e organização de páginas. Você consegue!",
     examples: [],
     exercise: {
-      instruction: `**MISSÃO FINAL:**
-
-1. **Responder o questionário:**
-   • 10 perguntas sobre HTML básico
-   • Perguntas sobre tags, estrutura e organização
-
-2. **Meta de aprovação:**
-   • Acerte pelo menos 6 perguntas (60%)
-   • Cada pergunta vale 1 ponto
-
-3. **Recompensa:**
-   • Certificado digital da ETEC
-   • Conclusão do curso de HTML básico`,
+      instruction:
+        "1) Leia cada pergunta com atenção\n2) Escolha a resposta que achar correta\n3) Acerte pelo menos 6 de 10 perguntas (60%)\n4) Ganhe seu certificado da ETEC!",
       expectedOutput: "",
       hint: "Releia as lições anteriores se precisar. As perguntas são sobre tags, estrutura e organização de páginas. Você consegue!",
     },
@@ -416,7 +360,13 @@ export function LessonContent({ lessonId }: LessonContentProps) {
             <CardContent className="pt-0 space-y-4">
               <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
                 <h4 className="font-medium text-blue-900 mb-2">Sua Missão:</h4>
-                <p className="text-blue-800 text-sm leading-relaxed">{lesson.exercise.instruction}</p>
+                <div className="text-blue-800 text-sm leading-relaxed">
+                  {lesson.exercise.instruction.split("\n").map((step, index) => (
+                    <div key={index} className="mb-1">
+                      {step}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
