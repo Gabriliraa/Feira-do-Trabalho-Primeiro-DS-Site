@@ -270,7 +270,7 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
     ]
 
     return allSuggestions.filter(
-      (s) => s.trigger.toLowerCase().startsWith(typed.toLowerCase()) && s.trigger !== typed.toLowerCase(),
+      (s) => s.trigger.toLowerCase().startsWith(typed.toLowerCase()) && typed.toLowerCase() !== s.trigger.toLowerCase(),
     )
   }
 

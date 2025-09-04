@@ -41,7 +41,8 @@ const lessonData = {
       },
     ],
     exercise: {
-      instruction: "Crie uma página com o título 'Meu Site ETEC' e um parágrafo dizendo 'Olá mundo!'",
+      instruction:
+        "PASSO A PASSO: 1) Clique em 'Template' para começar, 2) Mude o título da página para 'Meu Site ETEC', 3) Mude o <h1> para 'Meu Site ETEC', 4) Adicione um parágrafo <p> com o texto 'Olá mundo!' abaixo do h1",
       expectedOutput: `<!DOCTYPE html>
 <html>
 <head>
@@ -52,7 +53,7 @@ const lessonData = {
     <p>Olá mundo!</p>
 </body>
 </html>`,
-      hint: "Use <h1> para o título grande e <p> para o parágrafo. O editor vai te ajudar!",
+      hint: "Use o botão 'Template' primeiro! Depois digite 'h' para ver <h1> e 'p' para ver <p>. O editor vai te ajudar com sugestões!",
     },
   },
   2: {
@@ -78,7 +79,8 @@ Dica: Use h1 só uma vez por página!`,
       },
     ],
     exercise: {
-      instruction: "Crie uma página sobre você com título principal, subtítulo e um parágrafo com texto em negrito.",
+      instruction:
+        "PASSO A PASSO: 1) Use o template, 2) Mude o título para 'Sobre Mim', 3) Faça um <h1>Sobre Mim</h1>, 4) Faça um <h2>Estudante da ETEC</h2>, 5) Adicione um parágrafo falando seu nome e que está aprendendo HTML (use <strong> na palavra 'aprendendo')",
       expectedOutput: `<!DOCTYPE html>
 <html>
 <head>
@@ -90,7 +92,7 @@ Dica: Use h1 só uma vez por página!`,
     <p>Meu nome é João e estou <strong>aprendendo HTML</strong>!</p>
 </body>
 </html>`,
-      hint: "Use <h1> para o título principal, <h2> para o subtítulo e <strong> para negrito.",
+      hint: "Digite 'h1' para título principal, 'h2' para subtítulo, 'p' para parágrafo e 'strong' para negrito. Troque 'João' pelo seu nome!",
     },
   },
   3: {
@@ -128,7 +130,8 @@ Dica: Use h1 só uma vez por página!`,
       },
     ],
     exercise: {
-      instruction: "Crie uma página com cabeçalho, conteúdo principal e rodapé.",
+      instruction:
+        "PASSO A PASSO: 1) Use o template, 2) Dentro do <body>, faça um <header> com <h1>Meu Site</h1>, 3) Faça um <main> com <p>Conteúdo principal aqui.</p>, 4) Faça um <footer> com <p>Rodapé da página</p>",
       expectedOutput: `<!DOCTYPE html>
 <html>
 <head>
@@ -146,7 +149,7 @@ Dica: Use h1 só uma vez por página!`,
     </footer>
 </body>
 </html>`,
-      hint: "Use header, main e footer para organizar sua página.",
+      hint: "Digite 'header' para cabeçalho, 'main' para conteúdo principal e 'footer' para rodapé. Coloque tudo dentro do <body>!",
     },
   },
   4: {
@@ -169,7 +172,8 @@ Sempre coloque uma descrição na imagem (alt)!`,
       },
     ],
     exercise: {
-      instruction: "Crie uma página com um link para o Google e uma imagem.",
+      instruction:
+        "PASSO A PASSO: 1) Use o template, 2) Faça um <h1>Minha Página</h1>, 3) Faça um parágrafo com 'Visite o' + link para Google (use <a href='https://google.com'>Google</a>), 4) Adicione uma imagem (digite 'img' e use o autocomplete)",
       expectedOutput: `<!DOCTYPE html>
 <html>
 <head>
@@ -181,19 +185,20 @@ Sempre coloque uma descrição na imagem (alt)!`,
     <img src="imagem.jpg" alt="Minha imagem">
 </body>
 </html>`,
-      hint: "Use <a href='url'> para links e <img src='arquivo' alt='descrição'> para imagens.",
+      hint: "Digite 'a' para link e 'img' para imagem. O autocomplete vai te ajudar com a estrutura completa!",
     },
   },
   5: {
     title: "Quiz Final - Ganhe seu Certificado!",
     concept: "Parabéns! Agora você sabe criar sites! Faça o quiz para ganhar seu certificado da ETEC.",
     explanation:
-      "Este quiz testa tudo que você aprendeu. Precisa de 60% para passar e ganhar o certificado. Não se preocupe, as perguntas são sobre o que já vimos!",
+      "Este quiz testa tudo que você aprendeu nas 4 lições. Precisa acertar pelo menos 6 de 10 perguntas para passar e ganhar o certificado. Não se preocupe, as perguntas são sobre tags, estrutura e organização de páginas. Você consegue!",
     examples: [],
     exercise: {
-      instruction: "Complete o quiz com pelo menos 6 acertos para ganhar seu certificado da ETEC.",
+      instruction:
+        "MISSÃO FINAL: Responda 10 perguntas sobre HTML. Você precisa acertar pelo menos 6 perguntas (60%) para ganhar seu certificado da ETEC e completar o curso!",
       expectedOutput: "",
-      hint: "Releia as lições se precisar. Você consegue!",
+      hint: "Releia as lições anteriores se precisar. As perguntas são sobre tags, estrutura e organização de páginas. Você consegue!",
     },
   },
 }
