@@ -43,22 +43,11 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
   useEffect(() => {
     if (previewRef.current) {
       const iframe = previewRef.current
-      try {
-        const doc = iframe.contentDocument || iframe.contentWindow?.document
-        if (doc) {
-          iframe.srcDoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
-        }
-      } catch (error) {
-        console.log("[v0] Preview update error:", error)
-      }
+      iframe.srcDoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
     }
 
     if (typeof window !== "undefined" && window.previewFrame) {
-      try {
-        window.previewFrame.srcDoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
-      } catch (error) {
-        console.log("[v0] External preview update error:", error)
-      }
+      window.previewFrame.srcDoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
     }
   }, [code])
 
@@ -68,56 +57,23 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
         return false
       }
 
-      const testUserCode = () => {
+      const testCode = (htmlCode: string) => {
         try {
-          const iframe = document.createElement("iframe")
-          iframe.style.display = "none"
-          document.body.appendChild(iframe)
-          const doc = iframe.contentDocument || iframe.contentWindow?.document
-          if (doc) {
-            doc.open()
-            doc.write(userCode)
-            doc.close()
+          // Create a temporary div to parse HTML without iframe conflicts
+          const tempDiv = document.createElement("div")
+          tempDiv.innerHTML = htmlCode
 
-            const userBody = doc.body
-            const userText = userBody?.textContent?.trim() || ""
-            const userHTML = userBody?.innerHTML || ""
+          const textContent = tempDiv.textContent?.trim() || ""
+          const htmlContent = tempDiv.innerHTML || ""
 
-            document.body.removeChild(iframe)
-            return { text: userText, html: userHTML }
-          }
+          return { text: textContent, html: htmlContent }
         } catch (error) {
           return { text: "", html: "" }
         }
-        return { text: "", html: "" }
       }
 
-      const testExpectedCode = () => {
-        try {
-          const iframe = document.createElement("iframe")
-          iframe.style.display = "none"
-          document.body.appendChild(iframe)
-          const doc = iframe.contentDocument || iframe.contentWindow?.document
-          if (doc) {
-            doc.open()
-            doc.write(expectedCode)
-            doc.close()
-
-            const expectedBody = doc.body
-            const expectedText = expectedBody?.textContent?.trim() || ""
-            const expectedHTML = expectedBody?.innerHTML || ""
-
-            document.body.removeChild(iframe)
-            return { text: expectedText, html: expectedHTML }
-          }
-        } catch (error) {
-          return { text: "", html: "" }
-        }
-        return { text: "", html: "" }
-      }
-
-      const userOutput = testUserCode()
-      const expectedOutput = testExpectedCode()
+      const userOutput = testCode(userCode)
+      const expectedOutput = testCode(expectedCode)
 
       const requiredElements = extractRequiredElements(expectedCode)
       const hasRequiredElements = checkRequiredElements(userCode, requiredElements)
