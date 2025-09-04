@@ -46,8 +46,7 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
       try {
         const doc = iframe.contentDocument || iframe.contentWindow?.document
         if (doc) {
-          // Use srcdoc instead of document.write to avoid CSS processing issues
-          iframe.srcdoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
+          iframe.srcDoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
         }
       } catch (error) {
         console.log("[v0] Preview update error:", error)
@@ -56,7 +55,7 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
 
     if (typeof window !== "undefined" && window.previewFrame) {
       try {
-        window.previewFrame.srcdoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
+        window.previewFrame.srcDoc = code || "<html><body><p>Digite seu código HTML...</p></body></html>"
       } catch (error) {
         console.log("[v0] External preview update error:", error)
       }
@@ -533,7 +532,7 @@ export function HTMLPreview() {
         className="w-full h-full border-0"
         title="HTML Preview"
         sandbox="allow-same-origin allow-scripts"
-        srcdoc="<html><body><p>Digite seu código HTML...</p></body></html>"
+        srcDoc="<html><body><p>Digite seu código HTML...</p></body></html>"
       />
     </div>
   )
