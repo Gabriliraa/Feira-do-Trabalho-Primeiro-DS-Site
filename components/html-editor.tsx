@@ -22,8 +22,10 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
   const [showSuccess, setShowSuccess] = useState(false)
   const [lineNumbers, setLineNumbers] = useState<number[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [currentSuggestion, setCurrentSuggestion] = useState("")
-  const [suggestionIndex, setSuggestionIndex] = useState(0)
+  const [suggestions, setSuggestions] = useState<Array<{ trigger: string; completion: string; description: string }>>(
+    [],
+  )
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0)
   const [typedText, setTypedText] = useState("")
   const [cursorPosition, setCursorPosition] = useState(0)
   const previewRef = useRef<HTMLIFrameElement>(null)
@@ -33,7 +35,6 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
 
   const lesson = lessons.find((l) => l.id === lessonId)
 
-  // Generate line numbers
   useEffect(() => {
     const lines = code.split("\n").length
     setLineNumbers(Array.from({ length: Math.max(lines, 10) }, (_, i) => i + 1))
@@ -50,7 +51,6 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
       }
     }
 
-    // Also update global preview frame if it exists
     if (window.previewFrame) {
       const doc = window.previewFrame.contentDocument || window.previewFrame.contentWindow?.document
       if (doc) {
@@ -63,7 +63,10 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
 
   useEffect(() => {
     const validateCode = (userCode: string, expectedCode: string) => {
-      // Create temporary iframes to test both codes
+      if (!userCode.includes("<") || !userCode.includes(">")) {
+        return false
+      }
+
       const testUserCode = () => {
         try {
           const iframe = document.createElement("iframe")
@@ -75,17 +78,17 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
             doc.write(userCode)
             doc.close()
 
-            // Check if the code produces similar visual output
             const userBody = doc.body
-            const userText = userBody?.textContent?.trim().toLowerCase() || ""
+            const userText = userBody?.textContent?.trim() || ""
+            const userHTML = userBody?.innerHTML || ""
 
             document.body.removeChild(iframe)
-            return userText
+            return { text: userText, html: userHTML }
           }
         } catch (error) {
-          return ""
+          return { text: "", html: "" }
         }
-        return ""
+        return { text: "", html: "" }
       }
 
       const testExpectedCode = () => {
@@ -100,45 +103,88 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
             doc.close()
 
             const expectedBody = doc.body
-            const expectedText = expectedBody?.textContent?.trim().toLowerCase() || ""
+            const expectedText = expectedBody?.textContent?.trim() || ""
+            const expectedHTML = expectedBody?.innerHTML || ""
 
             document.body.removeChild(iframe)
-            return expectedText
+            return { text: expectedText, html: expectedHTML }
           }
         } catch (error) {
-          return ""
+          return { text: "", html: "" }
         }
-        return ""
+        return { text: "", html: "" }
       }
 
       const userOutput = testUserCode()
       const expectedOutput = testExpectedCode()
 
-      // Check if the essential content matches (ignoring minor spelling errors and formatting)
-      const normalizeText = (text: string) => {
+      const requiredElements = extractRequiredElements(expectedCode)
+      const hasRequiredElements = checkRequiredElements(userCode, requiredElements)
+
+      const textMatches = checkTextContent(userOutput.text, expectedOutput.text)
+
+      const structureMatches = checkHTMLStructure(userOutput.html, expectedOutput.html)
+
+      return hasRequiredElements && textMatches && structureMatches
+    }
+
+    const extractRequiredElements = (expectedCode: string) => {
+      const elementRegex = /<(\w+)(?:\s[^>]*)?>/g
+      const elements = []
+      let match
+      while ((match = elementRegex.exec(expectedCode)) !== null) {
+        elements.push(match[1].toLowerCase())
+      }
+      return [...new Set(elements)]
+    }
+
+    const checkRequiredElements = (userCode: string, requiredElements: string[]) => {
+      const userLower = userCode.toLowerCase()
+      const foundElements = requiredElements.filter((element) => {
+        return (
+          userLower.includes(`<${element}>`) || userLower.includes(`<${element} `) || userLower.includes(`<${element}/`)
+        )
+      })
+
+      return foundElements.length >= Math.ceil(requiredElements.length * 0.8)
+    }
+
+    const checkTextContent = (userText: string, expectedText: string) => {
+      if (!expectedText.trim()) return true
+
+      const normalizeForSpelling = (text: string) => {
         return text
-          .replace(/[^\w\s]/g, "")
+          .toLowerCase()
+          .replace(/[^\w\s]/g, " ")
           .replace(/\s+/g, " ")
           .trim()
       }
 
-      const normalizedUser = normalizeText(userOutput)
-      const normalizedExpected = normalizeText(expectedOutput)
+      const userNormalized = normalizeForSpelling(userText)
+      const expectedNormalized = normalizeForSpelling(expectedText)
 
-      // If the text content is similar (allowing for small differences)
-      if (normalizedUser && normalizedExpected) {
-        const similarity = calculateSimilarity(normalizedUser, normalizedExpected)
-        return similarity > 0.7 // 70% similarity threshold
-      }
+      if (userNormalized === expectedNormalized) return true
 
-      // Fallback to basic HTML structure check
-      const hasBasicStructure = userCode.includes("<") && userCode.includes(">")
-      const hasRequiredElements = checkRequiredElements(userCode, expectedCode)
-
-      return hasBasicStructure && hasRequiredElements
+      const similarity = calculateTextSimilarity(userNormalized, expectedNormalized)
+      return similarity > 0.75
     }
 
-    const calculateSimilarity = (str1: string, str2: string) => {
+    const checkHTMLStructure = (userHTML: string, expectedHTML: string) => {
+      const extractStructure = (html: string) => {
+        return html
+          .replace(/<(\w+)[^>]*>/g, "<$1>")
+          .replace(/>\s*</g, "><")
+          .toLowerCase()
+      }
+
+      const userStructure = extractStructure(userHTML)
+      const expectedStructure = extractStructure(expectedHTML)
+
+      const similarity = calculateTextSimilarity(userStructure, expectedStructure)
+      return similarity > 0.6
+    }
+
+    const calculateTextSimilarity = (str1: string, str2: string) => {
       const longer = str1.length > str2.length ? str1 : str2
       const shorter = str1.length > str2.length ? str2 : str1
 
@@ -168,24 +214,6 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
       return matrix[str2.length][str1.length]
     }
 
-    const checkRequiredElements = (userCode: string, expectedCode: string) => {
-      // Extract key HTML elements from expected code
-      const elementRegex = /<(\w+)[^>]*>/g
-      const expectedElements = []
-      let match
-      while ((match = elementRegex.exec(expectedCode)) !== null) {
-        expectedElements.push(match[1].toLowerCase())
-      }
-
-      // Check if user code has most of the required elements
-      const userLower = userCode.toLowerCase()
-      const foundElements = expectedElements.filter(
-        (element) => userLower.includes(`<${element}`) || userLower.includes(`<${element} `),
-      )
-
-      return foundElements.length >= Math.ceil(expectedElements.length * 0.7) // 70% of elements present
-    }
-
     const correct = validateCode(code, expectedOutput)
     setIsCorrect(correct)
   }, [code, expectedOutput])
@@ -196,11 +224,9 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
     setCode(newCode)
     setCursorPosition(position)
 
-    // Get the character before cursor
     const beforeCursor = newCode.substring(0, position)
     const lastChar = beforeCursor.charAt(position - 1)
 
-    // Smart autocomplete detection
     if (lastChar && /[a-zA-Z]/.test(lastChar)) {
       const wordStart = beforeCursor.search(/[a-zA-Z][a-zA-Z]*$/)
       if (wordStart !== -1) {
@@ -209,8 +235,8 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
 
         if (matchingSuggestions.length > 0) {
           setTypedText(currentWord)
-          setCurrentSuggestion(matchingSuggestions[0].completion)
-          setSuggestionIndex(0)
+          setSuggestions(matchingSuggestions)
+          setSelectedSuggestionIndex(0)
           setShowSuggestions(true)
         } else {
           setShowSuggestions(false)
@@ -222,20 +248,31 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && showSuggestions && currentSuggestion) {
-      e.preventDefault()
-      acceptSuggestion()
-    } else if (e.key === "Escape" && showSuggestions) {
-      setShowSuggestions(false)
+    if (showSuggestions && suggestions.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault()
+        setSelectedSuggestionIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0))
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault()
+        setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1))
+      } else if (e.key === "Enter") {
+        e.preventDefault()
+        acceptSuggestion()
+      } else if (e.key === "Escape") {
+        setShowSuggestions(false)
+      }
     }
   }
 
   const getMatchingSuggestions = (typed: string) => {
-    const suggestions = [
+    const allSuggestions = [
       { trigger: "p", completion: "<p></p>", description: "Parágrafo" },
       { trigger: "h1", completion: "<h1></h1>", description: "Título principal" },
       { trigger: "h2", completion: "<h2></h2>", description: "Subtítulo" },
       { trigger: "h3", completion: "<h3></h3>", description: "Título menor" },
+      { trigger: "h4", completion: "<h4></h4>", description: "Título pequeno" },
+      { trigger: "h5", completion: "<h5></h5>", description: "Título muito pequeno" },
+      { trigger: "h6", completion: "<h6></h6>", description: "Título mínimo" },
       { trigger: "div", completion: "<div></div>", description: "Divisão/Container" },
       { trigger: "span", completion: "<span></span>", description: "Texto inline" },
       { trigger: "strong", completion: "<strong></strong>", description: "Texto em negrito" },
@@ -253,31 +290,30 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
       { trigger: "title", completion: "<title></title>", description: "Título da página" },
     ]
 
-    return suggestions.filter(
+    return allSuggestions.filter(
       (s) => s.trigger.toLowerCase().startsWith(typed.toLowerCase()) && s.trigger !== typed.toLowerCase(),
     )
   }
 
   const acceptSuggestion = () => {
-    if (!textareaRef.current || !currentSuggestion) return
+    if (!textareaRef.current || suggestions.length === 0) return
 
+    const selectedSuggestion = suggestions[selectedSuggestionIndex]
     const textarea = textareaRef.current
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
     const beforeCursor = code.substring(0, start)
     const afterCursor = code.substring(end)
 
-    // Remove the typed text and insert the suggestion
     const wordStart = beforeCursor.search(/[a-zA-Z][a-zA-Z]*$/)
     const beforeWord = beforeCursor.substring(0, wordStart)
 
-    const newCode = beforeWord + currentSuggestion + afterCursor
+    const newCode = beforeWord + selectedSuggestion.completion + afterCursor
     setCode(newCode)
     setShowSuggestions(false)
 
-    // Position cursor appropriately
     setTimeout(() => {
-      const cursorPos = beforeWord.length + currentSuggestion.indexOf("></") + 1
+      const cursorPos = beforeWord.length + selectedSuggestion.completion.indexOf("></") + 1
       textarea.setSelectionRange(cursorPos, cursorPos)
       textarea.focus()
     }, 0)
@@ -294,7 +330,6 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
       setShowSuccess(true)
       completeLesson(lessonId)
 
-      // Show success for 3 seconds then redirect to home
       setTimeout(() => {
         router.push("/")
       }, 3000)
@@ -314,24 +349,8 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
 </html>`
   }
 
-  const htmlSuggestions = [
-    { completion: "<p></p>", description: "Parágrafo" },
-    { completion: "<h1></h1>", description: "Título principal" },
-    { completion: "<h2></h2>", description: "Subtítulo" },
-    { completion: "<strong></strong>", description: "Texto em negrito" },
-    { completion: "<em></em>", description: "Texto em itálico" },
-    { completion: '<a href=""></a>', description: "Link" },
-    { completion: '<img src="/placeholder.svg" alt="">', description: "Imagem" },
-    { completion: "<div></div>", description: "Container" },
-    { completion: "<span></span>", description: "Texto inline" },
-    { completion: "<ul>\n  <li></li>\n</ul>", description: "Lista não ordenada" },
-    { completion: "<ol>\n  <li></li>\n</ol>", description: "Lista ordenada" },
-    { completion: "<li></li>", description: "Item de lista" },
-  ]
-
   return (
     <div className="h-full flex flex-col bg-slate-900">
-      {/* Editor Header */}
       <div className="flex items-center justify-between p-3 border-b border-slate-700 bg-slate-800">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -391,9 +410,7 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
         </div>
       )}
 
-      {/* Editor Area */}
       <div className="flex-1 flex relative">
-        {/* Line Numbers */}
         <div className="bg-slate-800 text-slate-500 text-sm font-mono p-4 pr-2 select-none border-r border-slate-700">
           {lineNumbers.map((num) => (
             <div key={num} className="leading-6 text-right">
@@ -402,7 +419,6 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
           ))}
         </div>
 
-        {/* Code Editor */}
         <div className="flex-1 relative">
           <Textarea
             ref={textareaRef}
@@ -417,26 +433,42 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
             }}
           />
 
-          {showSuggestions && currentSuggestion && (
+          {showSuggestions && suggestions.length > 0 && (
             <div className="absolute top-16 left-4 bg-slate-800 border border-slate-600 rounded-lg shadow-lg z-10 max-w-sm">
               <div className="p-3 border-b border-slate-600">
-                <p className="text-xs text-slate-300 font-medium">💡 Sugestão Inteligente</p>
+                <p className="text-xs text-slate-300 font-medium">💡 Sugestões Inteligentes</p>
                 <p className="text-xs text-slate-400 mt-1">
-                  Pressione <kbd className="bg-slate-700 px-1 rounded">Enter</kbd> para aceitar
+                  Use <kbd className="bg-slate-700 px-1 rounded">↑↓</kbd> para navegar,{" "}
+                  <kbd className="bg-slate-700 px-1 rounded">Enter</kbd> para aceitar
                 </p>
               </div>
-              <div className="p-3">
-                <div className="font-mono text-blue-300 text-sm">{currentSuggestion}</div>
-                <div className="text-xs text-slate-400 mt-1">
-                  {htmlSuggestions.find((s) => s.completion === currentSuggestion)?.description}
-                </div>
+              <div className="max-h-48 overflow-y-auto">
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 border-b border-slate-700 last:border-b-0 cursor-pointer ${
+                      index === selectedSuggestionIndex ? "bg-slate-700" : "hover:bg-slate-750"
+                    }`}
+                    onClick={() => {
+                      setSelectedSuggestionIndex(index)
+                      acceptSuggestion()
+                    }}
+                  >
+                    <div className="font-mono text-blue-300 text-sm">{suggestion.completion}</div>
+                    <div className="text-xs text-slate-400 mt-1">{suggestion.description}</div>
+                  </div>
+                ))}
               </div>
+              {suggestions.length > 1 && (
+                <div className="p-2 border-t border-slate-600 text-xs text-slate-400 text-center">
+                  {selectedSuggestionIndex + 1} de {suggestions.length} sugestões
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Status Bar */}
       <div className="bg-slate-800 border-t border-slate-700 px-4 py-2 text-xs text-slate-400 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <span>HTML</span>
@@ -458,20 +490,17 @@ export function HTMLEditor({ lessonId, expectedOutput, initialCode = "" }: HTMLE
         </div>
       </div>
 
-      {/* Hidden preview iframe for real-time updates */}
       <iframe ref={previewRef} className="hidden" title="Hidden Preview" sandbox="allow-same-origin" />
     </div>
   )
 }
 
-// Preview component for the right panel
 export function HTMLPreview() {
   return (
     <div className="h-full bg-white">
       <iframe
         ref={(ref) => {
           if (ref) {
-            // This will be updated by the editor component
             window.previewFrame = ref
           }
         }}
